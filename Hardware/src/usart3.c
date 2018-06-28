@@ -78,7 +78,7 @@ void UART3_SendByte(unsigned char SendData)
 }  
 
 /*接收一个字节数据*/
-unsigned char UART3GetByte(unsigned char* GetData)
+unsigned char UART3_GetByte(unsigned char* GetData)
 {   	   
 	if(USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == RESET)
 	{  
@@ -95,7 +95,7 @@ void Test_UART3_Transceive(void)
 
 	while(1)
 	{    
-		while(UART3GetByte(&i))	USART_SendData(USART3,i);
+		while(UART3_GetByte(&i))	USART_SendData(USART3,i);
   }     
 }
 

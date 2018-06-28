@@ -1,9 +1,12 @@
 #ifndef __SIM800C_H
 #define	__SIM800C_H
 
-#include "timer2.h"
-#include "usart2.h"
+#define SIM800C_SINGLE_LINK_MODE 0
+#define SIM800C_MULTI_LINK_MODE 1
+#define SIM800C_SINGLE_IP_CONNECT 0
+#define SIM800C_MULTI_IP_CONNECT 1
 
 uint8_t SIM800C_EnterCmdMode(void);
+uint8_t SIM800C_Config(void);
 
 #endif

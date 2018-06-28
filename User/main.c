@@ -39,7 +39,7 @@ int main(void)
 	
 	while (FSM == 0)
 	{
-		if ( SIM800C_EnterCmdMode()) 
+		if ( SIM800C_Config() ) 
 		{
 			FSM = 1;
 			break;
@@ -51,8 +51,10 @@ int main(void)
 	USART3_Send("Enter the loop!\n");
   while (1)
   {
-		//LED_Switch();
-		//TICK_DelaySecond(5);
+		TICK_DelaySecond(1);
+		
+		LED_Switch();		
+		GPRS_HandleRequest();
 		
 		//USART3_Send("Program is running!\n");
 		//delay_ms(10000);

@@ -31,3 +31,9 @@ void LED_Switch(void)
 	GLB_LedFlag = (GLB_LedFlag == OFF) ? ON : OFF;
 	LED(GLB_LedFlag);
 }
+
+void LED_Flash(uint16_t ms)
+{
+	
+	
+}
