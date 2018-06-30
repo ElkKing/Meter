@@ -52,7 +52,11 @@ void USART2_Config(void)
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;	//硬件流控制模式设置：没有使能
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;//接收与发送都使能
 	USART_Init(USART2, &USART_InitStructure);  //初始化USART2
+	
+	USART_ClearITPendingBit(USART2, USART_IT_RXNE);
 	USART_ITConfig(USART2,USART_IT_RXNE,ENABLE); //Enable USART2 Recieve interrupts
+	USART2->SR;
+	USART2->DR;
 	USART_ITConfig(USART2,USART_IT_IDLE,ENABLE);
 	USART_Cmd(USART2, ENABLE);// USART2使能
 }
@@ -65,26 +69,29 @@ void USART2_BufferReset(void)
 }
 
 void USART2_IRQHandler(void){  
-      char RxData;
+	char RxData;
 
-      if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET) 
-			{  
-				USART_ClearITPendingBit(USART2, USART_IT_RXNE);  
-				RxData=USART_ReceiveData(USART2);
-				
-				if (GLB_Usart2BufferLen < USART2_BUFFER_SIZE-1)
-			  {
-					GLB_Usart2Buffer[GLB_Usart2BufferLen++] = RxData;
-				}
-				UART3_SendByte(RxData);
-      }
-			else if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
-			{
-				RxData = USART2->SR;
-				RxData = USART2->DR;
+	if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET) 
+	{  
+		USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+		RxData=USART_ReceiveData(USART2);
+
+		if ( (GLB_Usart2Recieved == 0)&&(GLB_Usart2BufferLen < USART2_BUFFER_SIZE-1) )
+		{
+			GLB_Usart2Buffer[GLB_Usart2BufferLen++] = RxData;
+		}
+		UART3_SendByte(RxData);
+	}
+	else if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
+	{
+		RxData = USART2->SR;
+		RxData = USART2->DR;
+		if (GLB_Usart2Recieved == 0) 
+		{
 				GLB_Usart2Recieved = 1;
-				//USART3_Send(GLB_Usart2Buffer);
-			}
+				USART3_Send(" | ");
+		}
+	}
 }
 
 void USART2_Send(char * data)

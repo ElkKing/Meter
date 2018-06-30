@@ -8,7 +8,10 @@
 #include "stm32f10x.h"
 #include "gprs.h"
 #include "sim800c.h"
+#include "tick.h"
+#include "usart3.h"
 #include <string.h>
+#include <stdio.h>
 
 uint8_t SIM800C_EnterCmdMode(void)
 {
@@ -20,29 +23,182 @@ uint8_t SIM800C_EnterCmdMode(void)
 	if (GPRS_AtCommand(cmd, expect, timeout) == 0) ret = 1;
 	return ret;
 }
+void SIM800C_SetEcho(uint8_t echo)
+{
+	if (echo)	GPRS_Send("ATE1\n");
+	else GPRS_Send("ATE0\n");
+	TICK_DelaySecond(1);
+}
 
 uint8_t SIM800C_SetMode(uint8_t link, uint8_t transfer)
 {
+	uint8_t retCode;
 	char * valLink = "0";
 	char * valConn = "0";
-	char cmd[20] = "AT+CIPMUX=";
-	char expect[] = "OK";
+	char cmd[20] = "AT+CIPMUX?\n";
+	char expect[50] = "+CIPMUX: ";
 	uint16_t timeout = 200;
 	
 	if(link == SIM800C_MULTI_LINK_MODE) valLink = "1";
 	if(transfer == SIM800C_MULTI_IP_CONNECT) valConn = "1";
 	
-	strcat(cmd, valLink);
-	if (GPRS_AtCommand(cmd, expect, timeout) != 0) return 0;
+	strcat(expect, valLink);
+	retCode = GPRS_AtCommand(cmd, expect, timeout);
+	if (retCode == 2 ) return 0;
+	else if (retCode == 1 ){
+		strcpy(cmd, "AT+CIPMUX=");
+		strcat(cmd, valLink);
+		strcat(cmd, "\n");
+		strcpy(expect, "OK");
+		if (GPRS_AtCommand(cmd, expect, timeout) != 0) return 0;
+	}
 	
-	strcpy(cmd, "AT+CIPMODE=");
-	strcat(cmd, valConn);
-	if (GPRS_AtCommand(cmd, expect, timeout) != 0) return 0;
-	else return 1;
+	strcpy(cmd, "AT+CIPMODE?\n");
+	strcpy(expect, "+CIPMODE: ");
+	strcat(expect, valConn);
+	retCode = GPRS_AtCommand(cmd, expect, timeout);
+	if (retCode == 2 ) return 0;
+	else if (retCode == 1 ){
+		strcpy(cmd, "AT+CIPMODE=");
+		strcat(cmd, valConn);
+		strcat(cmd, "\n");
+		strcpy(expect, "OK");
+		if (GPRS_AtCommand(cmd, expect, timeout) != 0) return 0;
+	}
+	
+	return 1;
+}
+uint8_t SIM800C_ConnectServer(char* protocol, char* serverIp, char * port)
+{
+		uint8_t retCode;
+		char cmd[50] = "";
+		char expect[50] = "";
+		uint16_t timeout = 200;
+	  uint8_t retry = 3;
+	
+	  strcpy(cmd,"AT+CIPSHUT\n");
+		strcpy(expect,"SHUT OK");
+		retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+	
+	  strcpy(cmd,"AT+CPIN?\n");
+		strcpy(expect,"+CPIN: READY");
+		retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+		
+	  strcpy(cmd,"AT+CSQ\n");
+		strcpy(expect,"+CSQ:");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+		
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CREG?\n");
+		strcpy(expect,"+CREG: 0,1");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CGATT?\n");
+		strcpy(expect,"+CGATT: 1");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+		
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CSTT=\"CMNET\"\n");
+		strcpy(expect,"OK");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CIPSTATUS\n");
+		strcpy(expect,"STATE: IP START");
+	  retCode = GPRS_AtCommandRetry(cmd, expect, timeout, retry);
+		if (retCode != 0) return 0;
+		
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CIICR\n");
+		strcpy(expect,"OK");
+		timeout = 60000;
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CIPSTATUS\n");
+		strcpy(expect,"STATE: IP GPRSACT");
+		timeout = 200;
+	  retCode = GPRS_AtCommandRetry(cmd, expect, timeout, retry);
+		if (retCode != 0) return 0;
+		
+		TICK_DelayMs(50);
+	  strcpy(cmd,"AT+CIFSR\n");
+		strcpy(expect,".");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+		
+		TICK_DelayMs(500);
+		sprintf(cmd,"AT+CIPSTART=\"%s\",\"%s\",\"%s\"\r\n",protocol,serverIp,port);
+		USART3_Send(cmd);
+		strcpy(expect,"OK");
+		retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0)  return 0;
+
+		TICK_DelaySecond(10);
+	  strcpy(cmd,"AT+CIPSTATUS\n");
+		strcpy(expect,"STATE: CONNECT OK");
+	  retCode = GPRS_AtCommandRetry(cmd, expect, timeout, retry);
+		if (retCode != 0) return 0;
+		
+		return 1;
+}
+
+uint8_t SIM800C_SendData(char* data)
+{
+		uint8_t retCode;
+		char cmd[20] = "";
+		char usrData[200] = "";
+		char expect[50] = "";
+		char submit[2] = "\0\0";
+		uint16_t timeout = 500;
+		submit[0] = 0x1A;
+	
+		strcpy(cmd,"AT+CIPSEND\n");
+		strcpy(expect,">");
+	  retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if (retCode != 0) return 0;
+
+		if( strlen(data) > 200) return 0;
+		
+		strcpy(usrData,data);
+		strcat(usrData, submit);
+		strcpy(expect,"SEND OK");
+		timeout = 15000;
+		retCode = GPRS_AtCommand(usrData, expect, timeout);
+		if (retCode != 0) return 0;
+		else return 1;
+}
+void SIM800C_CloseConnect(void)
+{
+		char cmd[50] = "";
+		char expect[50] = "";
+		uint16_t timeout = 200;
+	  //uint8_t retry = 3;
+	
+		strcpy(cmd,"AT+CIPCLOSE\n");
+		strcpy(expect,"CLOSE OK");
+	  GPRS_AtCommand(cmd, expect, timeout);
+		
+		strcpy(cmd,"AT+CIPSHUT\n");
+		strcpy(expect,"SHUT OK");
+	  GPRS_AtCommand(cmd, expect, timeout);
 }
 
 uint8_t SIM800C_Config(void)
 {
-	SIM800C_SetMode(SIM800C_SINGLE_LINK_MODE,SIM800C_SINGLE_IP_CONNECT);
+	char * protocol = "TCP";
+	char * server = "106.14.178.92";
+	char * port = "16026";
+	SIM800C_SetEcho(0);
+	if (! SIM800C_SetMode(SIM800C_SINGLE_LINK_MODE,SIM800C_SINGLE_IP_CONNECT) )return 0;
+	if (! SIM800C_ConnectServer(protocol, server, port) ) return 0;
 	return 1;
 }

@@ -9,6 +9,7 @@
 #include "gprs.h"
 #include "util.h"
 #include "usart3.h"
+#include "tick.h"
 #include <string.h>
 
 void GPRS_Config(void)
@@ -18,14 +19,14 @@ void GPRS_Config(void)
 	//GPRS_ModuleConfig();	
 }
 
-uint8_t GPRS_AtCommand(char * data, char * expect, uint16_t timeout)
+uint8_t GPRS_AtCommand(char * cmd, char * expect, uint16_t timeout)
 {
 	uint8_t retCode;
 	USART2_BufferReset();
 	TIMER2_Config(timeout);
 	TIMER2_Enable();
 	
-	USART2_Send(data);
+	USART2_Send(cmd);
 	while( GLB_Timer2Timeout == 0 )
 	{
 		while(GLB_Usart2Recieved){
@@ -48,6 +49,20 @@ uint8_t GPRS_AtCommand(char * data, char * expect, uint16_t timeout)
 	return  2;	
 }
 
+uint8_t GPRS_AtCommandRetry(char * cmd, char * expect, uint16_t timeout, uint8_t retry)
+{
+	uint8_t retCode;
+	uint8_t loop = 0;
+	uint16_t delay = 200; //200ms
+	
+	while(loop < retry)
+	{
+		retCode = GPRS_AtCommand(cmd, expect, timeout);
+		if ( retCode == 0 ) break;
+		TICK_DelayMs(delay);
+	}
+	return retCode;
+}
 void GPRS_HandleRequest(void)
 {
 		if(GLB_Usart2Recieved)USART2_BufferReset();	

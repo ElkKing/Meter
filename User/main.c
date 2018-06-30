@@ -31,11 +31,11 @@ int main(void)
 	USART3_Send("Program starts!\n");
 
 	GPRS_Config();	
-	LED_Config();
-	
 	TICK_Config();
+	
+	LED_Config();
 	LED_Switch();
-	TICK_DelaySecond(60);
+	TICK_DelaySecond(120);
 	
 	while (FSM == 0)
 	{
@@ -51,11 +51,11 @@ int main(void)
 	USART3_Send("Enter the loop!\n");
   while (1)
   {
-		TICK_DelaySecond(1);
+		TICK_DelaySecond(30);
 		
 		LED_Switch();		
 		GPRS_HandleRequest();
-		
+		SIM800C_SendData("Hello!");
 		//USART3_Send("Program is running!\n");
 		//delay_ms(10000);
 		//delay_ms(10000);
