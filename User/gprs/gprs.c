@@ -8,14 +8,16 @@
 #include "stm32f10x.h"
 #include "gprs.h"
 #include "util.h"
-#include "usart3.h"
+#include "debug.h"
+#include "timer4.h"
 #include "tick.h"
 #include <string.h>
 
 void GPRS_Config(void)
 {
-	USART2_Config();
+	USART2_Config(); 
 	TIMER2_Config(5000);
+	TIMER4_Config();
 	//GPRS_ModuleConfig();	
 }
 
@@ -33,19 +35,20 @@ uint8_t GPRS_AtCommand(char * cmd, char * expect, uint16_t timeout)
 			TIMER2_Disable();
 			if (UTIL_SearchBuffer(GLB_Usart2Buffer, expect)) 
 			{
-				USART3_Send("Matched\n");
+				DBG_Trace("Matched\n");
 				retCode = 0;
 			}
 			else 
 			{
-				USART3_Send("Dismatched\n");
+				DBG_Trace("Dismatched\n");
 				retCode = 1;
 			}
 			USART2_BufferReset();
 			return  retCode;
 		}			
 	}
-	USART3_Send("Timeout\n");
+	TIMER2_Disable();
+	DBG_Trace("Timeout\n");
 	return  2;	
 }
 
@@ -55,7 +58,7 @@ uint8_t GPRS_AtCommandRetry(char * cmd, char * expect, uint16_t timeout, uint8_t
 	uint8_t loop = 0;
 	uint16_t delay = 200; //200ms
 	
-	while(loop < retry)
+	while(loop++ < retry)
 	{
 		retCode = GPRS_AtCommand(cmd, expect, timeout);
 		if ( retCode == 0 ) break;

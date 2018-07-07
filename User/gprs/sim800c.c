@@ -9,9 +9,10 @@
 #include "gprs.h"
 #include "sim800c.h"
 #include "tick.h"
-#include "usart3.h"
+#include "debug.h"
 #include <string.h>
 #include <stdio.h>
+
 
 uint8_t SIM800C_EnterCmdMode(void)
 {
@@ -78,11 +79,13 @@ uint8_t SIM800C_ConnectServer(char* protocol, char* serverIp, char * port)
 	
 	  strcpy(cmd,"AT+CIPSHUT\n");
 		strcpy(expect,"SHUT OK");
+		timeout = 500;
 		retCode = GPRS_AtCommand(cmd, expect, timeout);
 		if (retCode != 0) return 0;
 	
 	  strcpy(cmd,"AT+CPIN?\n");
 		strcpy(expect,"+CPIN: READY");
+		timeout = 200;
 		retCode = GPRS_AtCommand(cmd, expect, timeout);
 		if (retCode != 0) return 0;
 		
@@ -167,11 +170,12 @@ uint8_t SIM800C_SendData(char* data)
 		if (retCode != 0) return 0;
 
 		if( strlen(data) > 200) return 0;
-		
+
+		//memcpy(usrData,data,len(data));
 		strcpy(usrData,data);
 		strcat(usrData, submit);
 		strcpy(expect,"SEND OK");
-		timeout = 15000;
+		timeout = 2000;
 		retCode = GPRS_AtCommand(usrData, expect, timeout);
 		if (retCode != 0) return 0;
 		else return 1;
@@ -181,7 +185,6 @@ void SIM800C_CloseConnect(void)
 		char cmd[50] = "";
 		char expect[50] = "";
 		uint16_t timeout = 200;
-	  //uint8_t retry = 3;
 	
 		strcpy(cmd,"AT+CIPCLOSE\n");
 		strcpy(expect,"CLOSE OK");
@@ -197,8 +200,18 @@ uint8_t SIM800C_Config(void)
 	char * protocol = "TCP";
 	char * server = "106.14.178.92";
 	char * port = "16026";
+	char message[50] = "\0";
+		
 	SIM800C_SetEcho(0);
+	sprintf(message,"Connect to %s:%s by %s",server,port,protocol); 
+	DBG_Trace(message);
 	if (! SIM800C_SetMode(SIM800C_SINGLE_LINK_MODE,SIM800C_SINGLE_IP_CONNECT) )return 0;
 	if (! SIM800C_ConnectServer(protocol, server, port) ) return 0;
 	return 1;
 }
+
+//void HeartBeat_Send(void)
+//{
+//	SIM800C_SendData(GLB_HeartBeat);
+//}
+

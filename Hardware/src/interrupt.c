@@ -12,24 +12,38 @@ void NVIC_Configure(void)
 	NVIC_InitTypeDef NVIC_InitStruct;
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
+	// 使能USART1中断
+	NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0; // 指定抢占式优先级别1
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0; // 指定响应优先级别0
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
+
 	// 使能USART2中断
 	NVIC_InitStruct.NVIC_IRQChannel = USART2_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1; // 指定抢占式优先级别1
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0; // 指定响应优先级别0
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0; // 指定抢占式优先级别1
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1; // 指定响应优先级别0
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
 	
 	// 使能TIMER2中断 
 	NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 2;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
 	
 	// 使能USART3中断
 	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1; // 指定抢占式优先级别1
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0; // 指定抢占式优先级别1
 	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 3; // 指定响应优先级别0
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
+	
+	// 使能TIMER4中断 
+	NVIC_InitStruct.NVIC_IRQChannel = TIM4_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
 }

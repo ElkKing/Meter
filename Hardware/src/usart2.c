@@ -12,7 +12,7 @@
 **********************************************************************************/
 
 #include "usart2.h"
-#include "usart3.h"
+#include "debug.h"
 #include "timer2.h"
 #include <stdarg.h>
 #include "led.h"
@@ -80,7 +80,7 @@ void USART2_IRQHandler(void){
 		{
 			GLB_Usart2Buffer[GLB_Usart2BufferLen++] = RxData;
 		}
-		UART3_SendByte(RxData);
+		DBG_TraceByte(RxData);
 	}
 	else if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
 	{
@@ -89,7 +89,7 @@ void USART2_IRQHandler(void){
 		if (GLB_Usart2Recieved == 0) 
 		{
 				GLB_Usart2Recieved = 1;
-				USART3_Send(" | ");
+				DBG_Trace(" | ");
 		}
 	}
 }

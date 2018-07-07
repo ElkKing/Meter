@@ -6,7 +6,7 @@
  **************************************/
 
 #include "timer2.h"
-#include "usart3.h"
+#include "debug.h"
 #include <stdarg.h>
 #include "led.h"
 
@@ -37,10 +37,8 @@ void TIM2_IRQHandler(void)
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) 
 	{ 
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-		//TIMER2_Disable();
 		GLB_Timer2Timeout = 1;
-		//LED_Switch();
-		//USART3_Send("+");  
+		DBG_Trace("."); 
 	}
 }
 
