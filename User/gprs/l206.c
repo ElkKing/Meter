@@ -1,5 +1,5 @@
 /***************************************
- * File:	gprs.c
+ * File:	l206.c
  * Description:	the APIs of GPRS module         
  * Vesion£º	v1.0.0
  * Author:	Lori Fan
@@ -7,15 +7,14 @@
 **********************************************************************************/
 #include "stm32f10x.h"
 #include "gprs.h"
-#include "sim800c.h"
+#include "l206.h"
 #include "tick.h"
 #include "debug.h"
-#include "util.h"
 #include <string.h>
 #include <stdio.h>
 
 
-uint8_t SIM800C_EnterCmdMode(void)
+uint8_t L206_EnterCmdMode(void)
 {
 	uint8_t ret=0;
 	char cmd[] = "+++";
@@ -25,14 +24,14 @@ uint8_t SIM800C_EnterCmdMode(void)
 	if (GPRS_AtCommand(cmd, expect, timeout) == 0) ret = 1;
 	return ret;
 }
-void SIM800C_SetEcho(uint8_t echo)
+void L206_SetEcho(uint8_t echo)
 {
 	if (echo)	GPRS_Send("ATE1\n");
 	else GPRS_Send("ATE0\n");
 	TICK_DelaySecond(1);
 }
 
-uint8_t SIM800C_SetMode(uint8_t link, uint8_t transfer)
+uint8_t L206_SetMode(uint8_t link, uint8_t transfer)
 {
 	uint8_t retCode;
 	char * valLink = "0";
@@ -41,8 +40,8 @@ uint8_t SIM800C_SetMode(uint8_t link, uint8_t transfer)
 	char expect[50] = "+CIPMUX: ";
 	uint16_t timeout = 200;
 	
-	if(link == SIM800C_MULTI_LINK_MODE) valLink = "1";
-	if(transfer == SIM800C_MULTI_IP_CONNECT) valConn = "1";
+	if(link == L206_MULTI_LINK_MODE) valLink = "1";
+	if(transfer == L206_MULTI_IP_CONNECT) valConn = "1";
 	
 	strcat(expect, valLink);
 	retCode = GPRS_AtCommand(cmd, expect, timeout);
@@ -70,7 +69,7 @@ uint8_t SIM800C_SetMode(uint8_t link, uint8_t transfer)
 	
 	return 1;
 }
-uint8_t SIM800C_ConnectServer(char* protocol, char* serverIp, char * port)
+uint8_t L206_ConnectServer(char* protocol, char* serverIp, char * port)
 {
 		uint8_t retCode;
 		char cmd[50] = "";
@@ -79,7 +78,7 @@ uint8_t SIM800C_ConnectServer(char* protocol, char* serverIp, char * port)
 	  uint8_t retry = 3;
 	
 	  strcpy(cmd,"AT+CIPSHUT\n");
-		strcpy(expect,"SHUT OK");
+		strcpy(expect,"OK");
 		timeout = 500;
 		retCode = GPRS_AtCommand(cmd, expect, timeout);
 		if (retCode != 0) return 0;
@@ -155,7 +154,7 @@ uint8_t SIM800C_ConnectServer(char* protocol, char* serverIp, char * port)
 		return 1;
 }
 
-uint8_t SIM800C_SendData(char* data)
+uint8_t L206_SendData(char* data)
 {
 		uint8_t retCode;
 		char cmd[20] = "";
@@ -181,36 +180,7 @@ uint8_t SIM800C_SendData(char* data)
 		if (retCode != 0) return 0;
 		else return 1;
 }
-
-uint8_t SIM800C_SendResult(char* data)
-{
-		uint8_t retCode;
-		uint8_t len =0;
-		char cmd[20] = "";
-		char usrData[200] = "";
-		char expect[50] = "";
-		char submit[2] = "\0\0";
-		uint16_t timeout = 500;
-		submit[0] = 0x1A;
-	
-		strcpy(cmd,"AT+CIPSEND\n");
-		strcpy(expect,">");
-	  retCode = GPRS_AtCommand(cmd, expect, timeout);
-		if (retCode != 0) return 0;
-
-		if( strlen(data) > 200) return 0;
-		len = UTIL_GetValidDataLen(data);
-		GPRS_SendRaw(data, len);
-	
-		strcpy(usrData,submit);
-		strcpy(expect,"SEND OK");
-		timeout = 2000;
-		retCode = GPRS_AtCommand(usrData, expect, timeout);
-		if (retCode != 0) return 0;
-		else return 1;
-}
-
-void SIM800C_CloseConnect(void)
+void L206_CloseConnect(void)
 {
 		char cmd[50] = "";
 		char expect[50] = "";
@@ -225,23 +195,23 @@ void SIM800C_CloseConnect(void)
 	  GPRS_AtCommand(cmd, expect, timeout);
 }
 
-uint8_t SIM800C_Config(void)
+uint8_t L206_Config(void)
 {
 	char * protocol = "TCP";
 	char * server = "106.14.178.92";
 	char * port = "16026";
 	char message[50] = "\0";
 		
-	SIM800C_SetEcho(0);
+	L206_SetEcho(0);
 	sprintf(message,"Connect to %s:%s by %s",server,port,protocol); 
 	DBG_Trace(message);
-	if (! SIM800C_SetMode(SIM800C_SINGLE_LINK_MODE,SIM800C_SINGLE_IP_CONNECT) )return 0;
-	if (! SIM800C_ConnectServer(protocol, server, port) ) return 0;
+	//if (! L206_SetMode(L206_SINGLE_LINK_MODE,L206_SINGLE_IP_CONNECT) )return 0;
+	if (! L206_ConnectServer(protocol, server, port) ) return 0;
 	return 1;
 }
 
 //void HeartBeat_Send(void)
 //{
-//	SIM800C_SendData(GLB_HeartBeat);
+//	L206_SendData(GLB_HeartBeat);
 //}
 

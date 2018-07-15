@@ -22,6 +22,38 @@
 uint8_t GLB_MeterId[20] = "\0";
 char GLB_HeartBeat[30];
 extern uint8_t HeartBeat_FailedCounter;
+void TEST_Meter(void)
+{
+	//HeartBeat_Send();
+  u8 energy[5] = "\0";
+	GPRS_HandleRequest();
+	
+	SIM800C_StopHeartBeat();
+	if (Read_watch_energy(energy))
+	{
+		SIM800C_SendData((char *)energy);
+	}
+	TICK_DelaySecond(1);
+	memset(energy,0x0,5);
+	if (Read_watch_energy_peak(energy))
+	{
+		SIM800C_SendData((char *)energy);
+	}
+	TICK_DelaySecond(1);
+	memset(energy,0x0,5);
+	if (Read_watch_energy_valley(energy))
+	{
+		SIM800C_SendData((char *)energy);
+	}
+	TICK_DelaySecond(1);
+	memset(energy,0x0,5);
+	if (Read_watch_energy_normal(energy))
+	{
+		SIM800C_SendData((char *)energy);
+	}
+	TICK_DelaySecond(1);
+	Watch_sync();
+}
 
 int main(void)
 { 
@@ -47,12 +79,10 @@ int main(void)
 	LED_Config();
 	LED_Switch();
 	
+//	SIM800C_StartHeartBeat();
 //	while(1)
 //	{
-//		SIM800C_StartHeartBeat();
-//		TICK_DelaySecond(30);
-//		SIM800C_StopHeartBeat();
-//		TICK_DelaySecond(30);
+//		TICK_DelaySecond(120);	
 //	};
 	TICK_DelaySecond(30);
 	DBG_Info("Enter the loop!\n");
@@ -75,7 +105,6 @@ int main(void)
 
 				if (Get_watch_addr(GLB_MeterId))
 				{
-					//DBG_Error((char *) GLB_MeterId);
 					UTIL_HeartBeatFormat(GLB_MeterId,GLB_HeartBeat);
 					DBG_Trace(GLB_HeartBeat);
 					SIM800C_StartHeartBeat();
@@ -84,37 +113,18 @@ int main(void)
 				break;
 			case 2:
 			{
-				//HeartBeat_Send();
-			  u8 energy[5] = "\0";
-				GPRS_HandleRequest();
+				if(GLB_Usart2Recieved)
+				{
+					int ret = 0;
+					uint8_t reply[100] = "\0";
+					SIM800C_StopHeartBeat();
+					USART2_BufferReset();
+					ret=Watch_SendRequest((u8 *)GLB_Usart2Buffer,reply);
+					if (ret == 1) SIM800C_SendResult((char *)reply);
+					SIM800C_StartHeartBeat();
+				}
 				
-				SIM800C_StopHeartBeat();
-				if (Read_watch_energy(energy))
-				{
-					SIM800C_SendData((char *)energy);
-				}
-				TICK_DelaySecond(1);
-				memset(energy,0x0,5);
-				if (Read_watch_energy_peak(energy))
-				{
-					SIM800C_SendData((char *)energy);
-				}
-				TICK_DelaySecond(1);
-				memset(energy,0x0,5);
-				if (Read_watch_energy_valley(energy))
-				{
-					SIM800C_SendData((char *)energy);
-				}
-				TICK_DelaySecond(1);
-				memset(energy,0x0,5);
-				if (Read_watch_energy_normal(energy))
-				{
-					SIM800C_SendData((char *)energy);
-				}
-				TICK_DelaySecond(1);
-				Watch_sync();
 				
-				SIM800C_StartHeartBeat();
 				if (HeartBeat_FailedCounter >=5) 
 				{
 					FSM=0;
@@ -129,10 +139,6 @@ int main(void)
 		
 		TICK_DelaySecond(10);
 		
-		//HeartBeat_Send();
-		//LED_Switch();		
-		//GPRS_HandleRequest();
-		//SIM800C_SendData("Hello!");
   }
 }
 

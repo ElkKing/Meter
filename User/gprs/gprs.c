@@ -66,6 +66,7 @@ uint8_t GPRS_AtCommandRetry(char * cmd, char * expect, uint16_t timeout, uint8_t
 	}
 	return retCode;
 }
+
 void GPRS_HandleRequest(void)
 {
 		if(GLB_Usart2Recieved)USART2_BufferReset();	

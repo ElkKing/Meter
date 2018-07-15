@@ -12,6 +12,7 @@
 
 uint8_t SIM800C_EnterCmdMode(void);
 uint8_t SIM800C_SendData(char* data);
+uint8_t SIM800C_SendResult(char* data);
 uint8_t SIM800C_Config(void);
 //void HeartBeat_Send(void);
 #endif

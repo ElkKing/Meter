@@ -12,4 +12,5 @@
 uint8_t UTIL_SearchBuffer(char *buff, char *a);
 void UTIL_HeartBeatFormat(u8 * address, char * out);
 void UTIL_SetMeterId( u8 * out);
+uint8_t UTIL_GetValidDataLen(char *data);
 #endif

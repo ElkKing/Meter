@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Libraries\FWlib\inc;.\Libraries\CMSIS;.\Hardware\inc;.\System\inc;.\User\led;.\User\gprs</IncludePath>
+              <IncludePath>.\Libraries\FWlib\inc;.\Libraries\CMSIS;.\Hardware\inc;.\System\inc;.\User\led;.\User\gprs;.\User\watch;.\User\debug</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -560,6 +560,16 @@
               <FileType>1</FileType>
               <FilePath>.\User\gprs\sim800c.c</FilePath>
             </File>
+            <File>
+              <FileName>watch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\watch\watch.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\debug\debug.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -589,6 +599,11 @@
               <FileName>timer2.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Hardware\src\timer2.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\src\timer4.c</FilePath>
             </File>
           </Files>
         </Group>

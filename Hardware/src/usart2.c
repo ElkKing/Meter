@@ -103,6 +103,15 @@ void USART2_Send(char * data)
 	}
 }
 
+void USART2_SendRaw(char * data, int8_t len)
+{
+	while(len-- > 0)
+	{
+		while(USART_GetFlagStatus(USART2, USART_FLAG_TC)==RESET); 
+		USART_SendData(USART2 ,*data++);
+	}
+}
+
 /*发送一个字节数据*/
  void UART2_SendByte(unsigned char SendData)
 {	   

@@ -15,6 +15,7 @@ extern  uint8_t GLB_Usart2Recieved;
  **************************************/
 void USART2_Config(void);
 void USART2_Send(char * data);
+void USART2_SendRaw(char * data, int8_t len);
 void USART2_BufferReset(void);
 void Test_UART2_Transceive(void);
 #endif /* __USART2_H */

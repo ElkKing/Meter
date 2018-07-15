@@ -33,6 +33,16 @@ void UTIL_HeartBeatFormat(uint8_t address[], char * out)
 	strcat(out,(char *) addr);
 }
 
+uint8_t UTIL_GetValidDataLen(char *data)
+{
+	uint8_t len = 0;
+	while(len <101)
+	{
+		if (data[len++] == 0x16) return len;
+	}
+	return 0;
+}
+
 void UTIL_SetMeterId( u8 * out)
 {
 	out[0] = 0x67;

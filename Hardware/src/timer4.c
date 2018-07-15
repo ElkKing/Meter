@@ -15,7 +15,7 @@ extern char GLB_HeartBeat[];
 extern uint8_t SIM800C_SendData(char* GLB_HeartBeat);
 #define HeartBeat_Send() SIM800C_SendData(GLB_HeartBeat)
 
-uint16_t HeartBeat_Interval = 30000; //30S
+uint16_t HeartBeat_Interval = 30000; //ms
 uint8_t HeartBeat_FailedCounter = 0;
 
 void TIMER4_Config(void)
@@ -26,9 +26,9 @@ void TIMER4_Config(void)
 	RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM4, DISABLE);
 	
-	TIM_TimeBaseStructure.TIM_Period = 10*HeartBeat_Interval - 1;    	//0.1ms
-	TIM_TimeBaseStructure.TIM_Prescaler = 7199; 			//10KHz
-	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV4;
+	TIM_TimeBaseStructure.TIM_Period = HeartBeat_Interval*2 - 1;    	//0.1ms
+	TIM_TimeBaseStructure.TIM_Prescaler = 7200*5 -1; 			//2KHz
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; 
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 	
@@ -44,7 +44,7 @@ void TIM4_IRQHandler(void)
 	{
 		LED_Switch();
 		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
-		//DBG_Trace(";");
+		DBG_Trace(";");
 		if (! HeartBeat_Send()) HeartBeat_FailedCounter++;
 	}
 }

@@ -15,16 +15,54 @@
 #include "tick.h"
 #include <string.h>
 
-u8 Watch_readAddr_cmd[16]  = {0xFE,0xFE,0xFE,0xFE,0x68,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0x68,0x13,0x00,0xDF,0x16};   //读通信地址
-u8 Watch_sync_cmd[16] 		 = {0xFE,0xFE,0xFE,0xFE,0x68,0x99,0x99,0x99,0x99,0x99,0x99,0x68,0x08,0x00,0x6E,0x16};
-u8 Watch_energy_cmd[20];
-u8 Watch_brakeOpen_buf[25];
-u8 Watch_brakeClose_buf[25];
-u16 Watch_checkSum(u8 *buf, u16 num);
+static u8 Watch_readAddr_cmd[16]  = {0xFE,0xFE,0xFE,0xFE,0x68,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0x68,0x13,0x00,0xDF,0x16};   //读通信地址
+static u8 Watch_sync_cmd[16] 		 = {0xFE,0xFE,0xFE,0xFE,0x68,0x99,0x99,0x99,0x99,0x99,0x99,0x68,0x08,0x00,0x6E,0x16};
+static u8 Watch_energy_cmd[20];
+//u8 Watch_brakeOpen_buf[25];
+//u8 Watch_brakeClose_buf[25];
+//u16 Watch_checkSum(u8 *buf, u16 num);
 //FE FE FE FE 68 99 99 99 99 99 99 68 08 00 6E 16
 
 //address
-u8 add[6] = {0};
+static u8 add[6] = {0};
+
+int Watch_SendRequest(u8 *cmd,u8 * reply)
+{
+	u8 Watch_reply[50] 		 = {0xFE,0xFE,0xFE,0xFE,0x68,0x67,0x48,0x60,0x10,0x00,0x00,0x68,0x93,0x06,0x9A, 0x7B, 0x93, 0x43, 0x33, 0x33, 0xD9, 0x16};
+	memcpy(reply,Watch_reply,50);
+	return 1;
+}
+/* 
+input:	cmd, cmd_len
+output:	data, data_len
+*/
+int Watch_request_data(u8 *cmd, int cmd_len, u8 *data, int *data_len)
+{
+	if(cmd[0]!= 0xfe || cmd[4]!= 0x68 || cmd[11]!= 0x68 || cmd[cmd_len-1]!= 0x16)
+		return 0;
+	
+	if(cmd[12]==0x13)//get address
+	{
+		Get_watch_addr(data);
+		*data_len = 6;
+	}
+	else if (cmd[12]==0x08)//Watch_sync
+	{
+		Watch_sync();
+		*data_len = 0;
+	}
+	else if (cmd[12]==0x11)//get power
+	{
+		Read_watch_power(cmd, cmd_len, data, data_len);
+	}
+	else
+	{
+		*data_len = 0;
+		return 0;
+	}
+	
+	return 1;
+}
 
 /********************************************************
 函数名称：void Watch_addr_get(void)
@@ -85,6 +123,30 @@ void Watch_sync(void)
 	USART1_Sendndata(Watch_sync_cmd,16);
 }
 
+/*总电量、峰、平、谷值通用*/
+int Read_watch_power(u8 *req_cmd, int cmd_len, u8 *power, int *data_len)
+{
+		USART1_BufferReset();
+		USART1_Send(req_cmd,cmd_len);		//发送指令
+		TICK_DelaySecond(1);
+		unsigned char data[24];
+		if(!USART1_Rcvndata(data))
+			return 0;
+		if (data[12] == 0x91 && data[13] == 0x08 && data[23] == 0x16)
+		{
+				/* data[21] 高位*/
+				//*energy = (int)(((data[21]-0x33) << 24) | ((data[20] - 0x33)<< 16) | (data[19] - 0x33)<<8 | (data[18] - 0x33));
+			memcpy(power,&data[18],4);
+			for (int i=0; i<4; i++)
+			{
+				power[i] -= 0x33;
+			}
+			*data_len = 4;
+			return 1;
+		}
+		
+		return 0;	
+}
 /********************************************************
 函数名称：void Watch_energyRead_cmd(void)
 功能描述: 从电能表获取数据
@@ -461,3 +523,5 @@ int Watch_brakeClose(void)
 //		
 //		return 1;
 //}
+
+
